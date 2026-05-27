@@ -1,0 +1,833 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--color-text-primary);background:transparent}
+.page{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);margin-bottom:2.5rem;overflow:hidden}
+.page-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:0.08em;text-transform:uppercase;padding:0.6rem 1rem;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 1rem;height:44px;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary)}
+.logo{font-size:14px;font-weight:500;display:flex;align-items:center;gap:6px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:#378ADD}
+.topbar-nav{display:flex;gap:1.5rem}
+.topbar-nav a{font-size:13px;color:var(--color-text-secondary);text-decoration:none}
+.topbar-nav a.active{color:var(--color-text-primary);font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--border-radius-md);font-size:13px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);cursor:pointer}
+.btn-primary{background:#185FA5;color:#E6F1FB;border-color:#185FA5}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-danger{background:var(--color-background-danger);color:var(--color-text-danger);border-color:var(--color-border-danger)}
+.sidebar{width:180px;min-height:400px;border-right:0.5px solid var(--color-border-tertiary);padding:1rem 0;background:var(--color-background-primary);flex-shrink:0}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:7px 1rem;font-size:13px;color:var(--color-text-secondary);cursor:pointer}
+.sidebar-item.active{color:var(--color-text-primary);background:var(--color-background-secondary);font-weight:500}
+.sidebar-item i{font-size:16px}
+.sidebar-section{font-size:10px;font-weight:500;letter-spacing:0.08em;color:var(--color-text-tertiary);padding:1rem 1rem 4px;text-transform:uppercase}
+.main{flex:1;padding:1.5rem;background:var(--color-background-tertiary);overflow:hidden}
+.layout{display:flex}
+.page-title{font-size:16px;font-weight:500;margin-bottom:1.25rem}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1rem}
+.metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.75rem 1rem}
+.metric-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.metric-val{font-size:22px;font-weight:500}
+.metric-val.green{color:#1D9E75}
+.metric-val.red{color:#E24B4A}
+.metric-val.amber{color:#BA7517}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--border-radius-md);font-size:11px;font-weight:500}
+.badge-success{background:#EAF3DE;color:#3B6D11}
+.badge-danger{background:#FCEBEB;color:#A32D2D}
+.badge-warn{background:#FAEEDA;color:#854F0B}
+.badge-info{background:#E6F1FB;color:#185FA5}
+.badge-gray{background:#F1EFE8;color:#5F5E5A}
+.table-wrap{overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:6px 10px;font-size:11px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
+td{padding:7px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
+tr:last-child td{border-bottom:none}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.dot-green{background:#1D9E75}
+.dot-red{background:#E24B4A}
+.dot-amber{background:#BA7517}
+.dot-gray{background:#888780}
+.form-row{margin-bottom:1rem}
+.form-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.form-hint{font-size:11px;color:var(--color-text-tertiary);margin-top:4px}
+.url-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:11px;font-family:var(--font-mono);background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:1rem 0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
+.section-title{font-size:13px;font-weight:500}
+.mono{font-family:var(--font-mono);font-size:11px}
+.payload-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0.75rem;font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary);line-height:1.6}
+.diff-add{color:#3B6D11;background:#EAF3DE;display:block;padding:0 4px;border-radius:2px}
+.diff-remove{color:#A32D2D;background:#FCEBEB;display:block;padding:0 4px;border-radius:2px;text-decoration:line-through}
+.diff-neutral{color:var(--color-text-secondary);display:block;padding:0 4px}
+.timeline{display:flex;gap:2px;align-items:flex-end;height:40px;margin-bottom:0.5rem}
+.timeline-bar{flex:1;border-radius:2px 2px 0 0;min-height:4px}
+.bar-ok{background:#1D9E75}
+.bar-fail{background:#E24B4A}
+.bar-warn{background:#BA7517}
+.bar-empty{background:var(--color-background-secondary)}
+.toggle{width:32px;height:18px;border-radius:9px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);position:relative;cursor:pointer;flex-shrink:0}
+.toggle.on{background:#185FA5;border-color:#185FA5}
+.toggle-knob{width:12px;height:12px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.1s}
+.toggle.on .toggle-knob{left:16px}
+.tab-bar{display:flex;gap:0;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1rem}
+.tab{padding:7px 14px;font-size:12px;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:var(--color-text-primary);font-weight:500;border-bottom:2px solid #185FA5}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;background:#E6F1FB;color:#185FA5;flex-shrink:0}
+.plan-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;text-align:center}
+.plan-card.featured{border:2px solid #185FA5}
+.plan-name{font-size:13px;font-weight:500;margin-bottom:4px}
+.plan-price{font-size:22px;font-weight:500;margin:8px 0 4px}
+.plan-price span{font-size:12px;font-weight:400;color:var(--color-text-secondary)}
+.plan-feature{font-size:11px;color:var(--color-text-secondary);padding:3px 0;border-top:0.5px solid var(--color-border-tertiary);margin-top:6px}
+.empty-state{text-align:center;padding:2rem;color:var(--color-text-secondary);font-size:13px}
+.alert-rule{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.alert-rule:last-child{border-bottom:none}
+.onboarding-step{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.onboarding-step:last-child{border-bottom:none}
+.step-num{width:22px;height:22px;border-radius:50%;background:#E6F1FB;color:#185FA5;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-num.done{background:#EAF3DE;color:#3B6D11}
+.notif-item{display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary);align-items:flex-start}
+.notif-item:last-child{border-bottom:none}
+.notif-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.notif-danger{background:#FCEBEB;color:#A32D2D}
+.notif-success{background:#EAF3DE;color:#3B6D11}
+.notif-info{background:#E6F1FB;color:#185FA5}
+.progress-bar{height:4px;border-radius:2px;background:var(--color-background-secondary);overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:2px;background:#185FA5}
+</style>
+
+<h2 class="sr-only">Webhook monitor product wireframes — all pages desktop view</h2>
+
+<div style="padding:1rem 0">
+
+<!-- PAGE 1: LANDING -->
+<div class="page">
+<div class="page-label">Page 1 — Landing page</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div class="topbar-nav">
+    <a href="#" class="active">Product</a>
+    <a href="#">Pricing</a>
+    <a href="#">Docs</a>
+    <a href="#">Blog</a>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-sm">Log in</button>
+    <button class="btn btn-sm btn-primary">Start free</button>
+  </div>
+</div>
+<div style="padding:3rem 2rem;text-align:center;background:var(--color-background-primary)">
+  <div class="badge badge-info" style="margin-bottom:1rem">Zero-config webhook observability</div>
+  <div style="font-size:26px;font-weight:500;line-height:1.3;max-width:480px;margin:0 auto 1rem">Stop losing transactions to silent webhook failures</div>
+  <div style="font-size:14px;color:var(--color-text-secondary);max-width:400px;margin:0 auto 1.5rem">Route your Stripe, GitHub, or any webhook through HookWatch. See payloads, get Slack alerts on failures, and replay with one click.</div>
+  <div style="display:flex;gap:10px;justify-content:center;margin-bottom:2rem">
+    <button class="btn btn-primary">Get started free</button>
+    <button class="btn">See how it works</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;max-width:600px;margin:0 auto">
+    <div class="card" style="text-align:left">
+      <i class="ti ti-antenna" style="font-size:18px;color:#185FA5;margin-bottom:6px" aria-hidden="true"></i>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">Proxy & log</div>
+      <div style="font-size:11px;color:var(--color-text-secondary)">All incoming events captured with full payload history</div>
+    </div>
+    <div class="card" style="text-align:left">
+      <i class="ti ti-bell-ringing" style="font-size:18px;color:#185FA5;margin-bottom:6px" aria-hidden="true"></i>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">Instant alerts</div>
+      <div style="font-size:11px;color:var(--color-text-secondary)">Slack/Discord/email the second a non-200 is detected</div>
+    </div>
+    <div class="card" style="text-align:left">
+      <i class="ti ti-player-play" style="font-size:18px;color:#185FA5;margin-bottom:6px" aria-hidden="true"></i>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">One-click replay</div>
+      <div style="font-size:11px;color:var(--color-text-secondary)">Resend any historical payload to your endpoint instantly</div>
+    </div>
+  </div>
+</div>
+<div style="padding:1.5rem 2rem;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;gap:2rem;border-top:0.5px solid var(--color-border-tertiary)">
+  <div style="font-size:11px;color:var(--color-text-tertiary)">Trusted by teams using</div>
+  <div style="font-size:12px;color:var(--color-text-secondary);display:flex;gap:1.5rem">
+    <span>Stripe</span><span>GitHub</span><span>Shopify</span><span>Clerk</span><span>Twilio</span><span>HubSpot</span>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 2: PRICING -->
+<div class="page">
+<div class="page-label">Page 2 — Pricing</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div class="topbar-nav"><a href="#">Product</a><a href="#" class="active">Pricing</a><a href="#">Docs</a></div>
+  <div style="display:flex;gap:8px"><button class="btn btn-sm">Log in</button><button class="btn btn-sm btn-primary">Start free</button></div>
+</div>
+<div style="padding:2rem;background:var(--color-background-tertiary)">
+  <div style="text-align:center;margin-bottom:1.5rem">
+    <div style="font-size:18px;font-weight:500;margin-bottom:6px">Simple, transparent pricing</div>
+    <div style="font-size:13px;color:var(--color-text-secondary)">14-day free trial. No credit card required.</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;max-width:640px;margin:0 auto">
+    <div class="plan-card">
+      <div class="plan-name">Hobby</div>
+      <div class="plan-price">$0<span>/mo</span></div>
+      <div class="plan-feature">3 pipelines</div>
+      <div class="plan-feature">7-day log retention</div>
+      <div class="plan-feature">Email alerts only</div>
+      <div class="plan-feature">10K events/mo</div>
+      <button class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center">Get started</button>
+    </div>
+    <div class="plan-card featured">
+      <div class="badge badge-info" style="margin-bottom:6px">Most popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">$49<span>/mo</span></div>
+      <div class="plan-feature">Unlimited pipelines</div>
+      <div class="plan-feature">30-day log retention</div>
+      <div class="plan-feature">Slack + Discord + email</div>
+      <div class="plan-feature">500K events/mo</div>
+      <button class="btn btn-sm btn-primary" style="margin-top:12px;width:100%;justify-content:center">Start trial</button>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Agency</div>
+      <div class="plan-price">$99<span>/mo</span></div>
+      <div class="plan-feature">Multi-workspace</div>
+      <div class="plan-feature">90-day log retention</div>
+      <div class="plan-feature">White-label status page</div>
+      <div class="plan-feature">5M events/mo</div>
+      <button class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center">Start trial</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 3: AUTH -->
+<div class="page">
+<div class="page-label">Page 3 — Auth (login / signup)</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;min-height:320px">
+  <div style="padding:2.5rem;background:var(--color-background-primary);display:flex;flex-direction:column;justify-content:center">
+    <div class="logo" style="margin-bottom:1.5rem"><div class="logo-dot"></div>HookWatch</div>
+    <div style="font-size:16px;font-weight:500;margin-bottom:0.25rem">Create your account</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:1.25rem">14-day free trial, no credit card needed</div>
+    <div class="form-row">
+      <label class="form-label">Work email</label>
+      <div class="form-input" style="color:var(--color-text-tertiary)">you@company.com</div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Password</label>
+      <div class="form-input" style="color:var(--color-text-tertiary)">••••••••</div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:10px">Create account</button>
+    <div style="text-align:center;font-size:11px;color:var(--color-text-tertiary)">or</div>
+    <button class="btn" style="width:100%;justify-content:center;margin-top:8px"><i class="ti ti-brand-github" aria-hidden="true"></i> Continue with GitHub</button>
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:1rem;text-align:center">Already have an account? <span style="color:#185FA5">Log in</span></div>
+  </div>
+  <div style="padding:2.5rem;background:var(--color-background-secondary);display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem">Why teams use HookWatch</div>
+    <div class="onboarding-step">
+      <div class="step-num done"><i class="ti ti-check" style="font-size:10px" aria-hidden="true"></i></div>
+      <div><div style="font-size:12px;font-weight:500">Zero-config setup</div><div style="font-size:11px;color:var(--color-text-secondary)">Paste your proxy URL, done in 2 minutes</div></div>
+    </div>
+    <div class="onboarding-step">
+      <div class="step-num done"><i class="ti ti-check" style="font-size:10px" aria-hidden="true"></i></div>
+      <div><div style="font-size:12px;font-weight:500">Full payload history</div><div style="font-size:11px;color:var(--color-text-secondary)">Every event logged, encrypted, and replayable</div></div>
+    </div>
+    <div class="onboarding-step">
+      <div class="step-num done"><i class="ti ti-check" style="font-size:10px" aria-hidden="true"></i></div>
+      <div><div style="font-size:12px;font-weight:500">Instant Slack alerts</div><div style="font-size:11px;color:var(--color-text-secondary)">Know within seconds when something breaks</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 4: ONBOARDING -->
+<div class="page">
+<div class="page-label">Page 4 — Onboarding (first-time user)</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="font-size:12px;color:var(--color-text-secondary)">Step 2 of 3 — Set up your first pipeline</div>
+  <button class="btn btn-sm">Skip for now</button>
+</div>
+<div style="padding:2rem;background:var(--color-background-tertiary)">
+  <div style="max-width:520px;margin:0 auto">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:1.5rem">
+      <div style="width:24px;height:24px;border-radius:50%;background:#EAF3DE;color:#3B6D11;font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center"><i class="ti ti-check" style="font-size:10px" aria-hidden="true"></i></div>
+      <div style="height:2px;flex:1;background:#EAF3DE"></div>
+      <div style="width:24px;height:24px;border-radius:50%;background:#185FA5;color:#E6F1FB;font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center">2</div>
+      <div style="height:2px;flex:1;background:var(--color-border-tertiary)"></div>
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--color-background-secondary);color:var(--color-text-tertiary);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center">3</div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:500;margin-bottom:1rem">Create your first pipeline</div>
+      <div class="form-row">
+        <label class="form-label">Pipeline name</label>
+        <div class="form-input">Stripe Production</div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Destination URL <span style="color:var(--color-text-tertiary)">(your actual server)</span></label>
+        <div class="form-input">https://api.yourapp.com/webhooks/stripe</div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Provider (optional — for smart defaults)</label>
+        <div class="form-input" style="color:var(--color-text-secondary)">Stripe ▾</div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px">Your proxy URL <span style="font-size:11px;font-weight:400;color:var(--color-text-tertiary)">(use this in Stripe dashboard)</span></div>
+      <div class="url-pill" style="width:100%;justify-content:space-between">
+        <span>https://in.hookwatch.io/p/abc123xyz</span>
+        <i class="ti ti-copy" style="font-size:13px" aria-hidden="true"></i>
+      </div>
+      <div class="form-hint" style="margin-top:6px">Copy this URL and paste it where you'd normally put your server URL in Stripe's webhook settings.</div>
+      <button class="btn btn-primary" style="margin-top:1.25rem">Create pipeline →</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 5: DASHBOARD OVERVIEW -->
+<div class="page">
+<div class="page-label">Page 5 — Dashboard overview</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <i class="ti ti-bell" style="font-size:16px;color:var(--color-text-secondary)" aria-hidden="true"></i>
+    <div class="avatar">JS</div>
+  </div>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item active"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="sidebar-item"><i class="ti ti-git-branch" aria-hidden="true"></i> Pipelines</div>
+    <div class="sidebar-item"><i class="ti ti-list-details" aria-hidden="true"></i> Event logs</div>
+    <div class="sidebar-item"><i class="ti ti-player-play" aria-hidden="true"></i> Replay queue</div>
+    <div class="sidebar-section">Alerts</div>
+    <div class="sidebar-item"><i class="ti ti-bell-ringing" aria-hidden="true"></i> Alert rules</div>
+    <div class="sidebar-item"><i class="ti ti-history" aria-hidden="true"></i> Alert history</div>
+    <div class="sidebar-section">Workspace</div>
+    <div class="sidebar-item"><i class="ti ti-users" aria-hidden="true"></i> Team</div>
+    <div class="sidebar-item"><i class="ti ti-key" aria-hidden="true"></i> API keys</div>
+    <div class="sidebar-item"><i class="ti ti-credit-card" aria-hidden="true"></i> Billing</div>
+    <div class="sidebar-item"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+  </div>
+  <div class="main">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="page-title" style="margin:0">Overview</div>
+      <div style="display:flex;gap:8px">
+        <div class="form-input" style="width:auto;padding:5px 10px;font-size:12px;color:var(--color-text-secondary)">Last 24 hours ▾</div>
+        <button class="btn btn-sm btn-primary"><i class="ti ti-plus" aria-hidden="true"></i> New pipeline</button>
+      </div>
+    </div>
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Total events</div><div class="metric-val">14,203</div></div>
+      <div class="metric"><div class="metric-label">Success rate</div><div class="metric-val green">98.7%</div></div>
+      <div class="metric"><div class="metric-label">Failures</div><div class="metric-val red">183</div></div>
+      <div class="metric"><div class="metric-label">Avg latency</div><div class="metric-val amber">142ms</div></div>
+    </div>
+    <div class="card">
+      <div class="section-head"><div class="section-title">Pipeline health</div><span style="font-size:11px;color:var(--color-text-tertiary)">5 pipelines</span></div>
+      <table>
+        <thead><tr><th>Pipeline</th><th>Provider</th><th>Status</th><th>Last event</th><th>24h success</th><th>Latency</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="mono">stripe-prod</td><td><span class="badge badge-gray">Stripe</span></td><td><span class="status-dot dot-green"></span>Healthy</td><td style="color:var(--color-text-secondary)">2m ago</td><td class="green">99.2%</td><td>138ms</td><td><i class="ti ti-chevron-right" style="color:var(--color-text-tertiary)" aria-hidden="true"></i></td></tr>
+          <tr><td class="mono">github-deploy</td><td><span class="badge badge-gray">GitHub</span></td><td><span class="status-dot dot-green"></span>Healthy</td><td style="color:var(--color-text-secondary)">11m ago</td><td class="green">100%</td><td>89ms</td><td><i class="ti ti-chevron-right" style="color:var(--color-text-tertiary)" aria-hidden="true"></i></td></tr>
+          <tr><td class="mono">shopify-orders</td><td><span class="badge badge-gray">Shopify</span></td><td><span class="status-dot dot-red"></span><span style="color:#A32D2D">Failing</span></td><td style="color:var(--color-text-secondary)">3m ago</td><td class="red">71.4%</td><td>2.1s</td><td><i class="ti ti-chevron-right" style="color:var(--color-text-tertiary)" aria-hidden="true"></i></td></tr>
+          <tr><td class="mono">clerk-auth</td><td><span class="badge badge-gray">Clerk</span></td><td><span class="status-dot dot-amber"></span><span style="color:#BA7517">Degraded</span></td><td style="color:var(--color-text-secondary)">18m ago</td><td class="amber">88.1%</td><td>910ms</td><td><i class="ti ti-chevron-right" style="color:var(--color-text-tertiary)" aria-hidden="true"></i></td></tr>
+          <tr><td class="mono">sendgrid-mail</td><td><span class="badge badge-gray">SendGrid</span></td><td><span class="status-dot dot-green"></span>Healthy</td><td style="color:var(--color-text-secondary)">1h ago</td><td class="green">97.8%</td><td>201ms</td><td><i class="ti ti-chevron-right" style="color:var(--color-text-tertiary)" aria-hidden="true"></i></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Recent failures</div><span style="font-size:11px;color:#185FA5">View all</span></div>
+        <div style="font-size:12px">
+          <div style="padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;justify-content:space-between"><span class="mono">shopify-orders</span><span class="badge badge-danger">500</span></div>
+          <div style="padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;justify-content:space-between"><span class="mono">clerk-auth</span><span class="badge badge-warn">408</span></div>
+          <div style="padding:6px 0;display:flex;justify-content:space-between"><span class="mono">shopify-orders</span><span class="badge badge-danger">500</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Event volume (24h)</div></div>
+        <div class="timeline">
+          <div class="timeline-bar bar-ok" style="height:60%"></div><div class="timeline-bar bar-ok" style="height:75%"></div><div class="timeline-bar bar-ok" style="height:55%"></div><div class="timeline-bar bar-ok" style="height:90%"></div><div class="timeline-bar bar-fail" style="height:40%"></div><div class="timeline-bar bar-fail" style="height:35%"></div><div class="timeline-bar bar-ok" style="height:80%"></div><div class="timeline-bar bar-ok" style="height:70%"></div><div class="timeline-bar bar-ok" style="height:95%"></div><div class="timeline-bar bar-warn" style="height:60%"></div><div class="timeline-bar bar-ok" style="height:85%"></div><div class="timeline-bar bar-ok" style="height:75%"></div>
+        </div>
+        <div style="display:flex;gap:12px;font-size:10px;color:var(--color-text-tertiary)"><span><span class="status-dot dot-green"></span>Success</span><span><span class="status-dot dot-red"></span>Failure</span><span><span class="status-dot dot-amber"></span>Timeout</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 6: PIPELINE DETAIL -->
+<div class="page">
+<div class="page-label">Page 6 — Pipeline detail & setup</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="font-size:13px;color:var(--color-text-secondary)"><span style="color:var(--color-text-tertiary)">Pipelines</span> / shopify-orders</div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-sm"><i class="ti ti-edit" aria-hidden="true"></i> Edit</button>
+    <button class="btn btn-sm btn-danger">Pause</button>
+  </div>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="sidebar-item active"><i class="ti ti-git-branch" aria-hidden="true"></i> Pipelines</div>
+    <div class="sidebar-item"><i class="ti ti-list-details" aria-hidden="true"></i> Event logs</div>
+    <div class="sidebar-item"><i class="ti ti-player-play" aria-hidden="true"></i> Replay queue</div>
+    <div class="sidebar-section">Alerts</div>
+    <div class="sidebar-item"><i class="ti ti-bell-ringing" aria-hidden="true"></i> Alert rules</div>
+    <div class="sidebar-item"><i class="ti ti-history" aria-hidden="true"></i> Alert history</div>
+    <div class="sidebar-section">Workspace</div>
+    <div class="sidebar-item"><i class="ti ti-users" aria-hidden="true"></i> Team</div>
+    <div class="sidebar-item"><i class="ti ti-key" aria-hidden="true"></i> API keys</div>
+    <div class="sidebar-item"><i class="ti ti-credit-card" aria-hidden="true"></i> Billing</div>
+    <div class="sidebar-item"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+  </div>
+  <div class="main">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+      <div class="page-title" style="margin:0">shopify-orders</div>
+      <span class="badge badge-danger"><span class="status-dot dot-red" style="margin:0 4px 0 0"></span>Failing</span>
+      <span class="badge badge-gray">Shopify</span>
+    </div>
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Events today</div><div class="metric-val">2,841</div></div>
+      <div class="metric"><div class="metric-label">Success rate</div><div class="metric-val red">71.4%</div></div>
+      <div class="metric"><div class="metric-label">Failures</div><div class="metric-val red">812</div></div>
+      <div class="metric"><div class="metric-label">Avg latency</div><div class="metric-val amber">2.1s</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:0.75rem">Pipeline config</div>
+        <div style="font-size:12px">
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span style="color:var(--color-text-secondary)">Proxy URL</span><span class="mono" style="color:#185FA5">in.hookwatch.io/p/abc123</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span style="color:var(--color-text-secondary)">Destination</span><span class="mono">api.myshop.com/wh</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span style="color:var(--color-text-secondary)">Timeout</span><span>10s</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span style="color:var(--color-text-secondary)">Retry on failure</span><span>3× with backoff</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0"><span style="color:var(--color-text-secondary)">Retention</span><span>30 days</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:0.75rem">Signature verification</div>
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px">HookWatch verifies Shopify's HMAC signature before forwarding. Your destination receives only authenticated events.</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--color-background-secondary);border-radius:var(--border-radius-md)">
+          <span style="font-size:12px">Signature check</span>
+          <div class="toggle on"><div class="toggle-knob"></div></div>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">Secret stored encrypted. Never exposed in logs.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-head">
+        <div class="section-title">Recent events</div>
+        <button class="btn btn-sm"><i class="ti ti-filter" aria-hidden="true"></i> Filter</button>
+      </div>
+      <table>
+        <thead><tr><th>Event ID</th><th>Type</th><th>Status</th><th>Latency</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td class="mono" style="color:#185FA5">evt_8xKp2</td><td class="mono" style="font-size:10px">orders/create</td><td><span class="badge badge-danger">500</span></td><td style="color:#E24B4A">2.4s</td><td style="color:var(--color-text-secondary)">2m ago</td><td><button class="btn btn-sm"><i class="ti ti-player-play" aria-hidden="true"></i> Replay</button></td></tr>
+          <tr><td class="mono" style="color:#185FA5">evt_7mNq1</td><td class="mono" style="font-size:10px">orders/paid</td><td><span class="badge badge-success">200</span></td><td>141ms</td><td style="color:var(--color-text-secondary)">4m ago</td><td><button class="btn btn-sm"><i class="ti ti-player-play" aria-hidden="true"></i> Replay</button></td></tr>
+          <tr><td class="mono" style="color:#185FA5">evt_6jLr9</td><td class="mono" style="font-size:10px">orders/create</td><td><span class="badge badge-danger">500</span></td><td style="color:#E24B4A">3.1s</td><td style="color:var(--color-text-secondary)">6m ago</td><td><button class="btn btn-sm"><i class="ti ti-player-play" aria-hidden="true"></i> Replay</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 7: EVENT LOG + PAYLOAD INSPECTOR -->
+<div class="page">
+<div class="page-label">Page 7 — Event log & payload inspector</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="font-size:13px;color:var(--color-text-secondary)">Event <span class="mono">evt_8xKp2</span></div>
+  <button class="btn btn-sm btn-primary"><i class="ti ti-player-play" aria-hidden="true"></i> Replay this event</button>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="sidebar-item"><i class="ti ti-git-branch" aria-hidden="true"></i> Pipelines</div>
+    <div class="sidebar-item active"><i class="ti ti-list-details" aria-hidden="true"></i> Event logs</div>
+    <div class="sidebar-item"><i class="ti ti-player-play" aria-hidden="true"></i> Replay queue</div>
+    <div class="sidebar-section">Alerts</div>
+    <div class="sidebar-item"><i class="ti ti-bell-ringing" aria-hidden="true"></i> Alert rules</div>
+    <div class="sidebar-item"><i class="ti ti-history" aria-hidden="true"></i> Alert history</div>
+    <div class="sidebar-section">Workspace</div>
+    <div class="sidebar-item"><i class="ti ti-users" aria-hidden="true"></i> Team</div>
+    <div class="sidebar-item"><i class="ti ti-key" aria-hidden="true"></i> API keys</div>
+    <div class="sidebar-item"><i class="ti ti-credit-card" aria-hidden="true"></i> Billing</div>
+    <div class="sidebar-item"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+  </div>
+  <div class="main">
+    <div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+      <div class="card" style="flex:1;min-width:140px;margin-bottom:0">
+        <div style="font-size:11px;color:var(--color-text-secondary)">Status</div>
+        <div style="margin-top:4px"><span class="badge badge-danger">500 Internal Server Error</span></div>
+      </div>
+      <div class="card" style="flex:1;min-width:140px;margin-bottom:0">
+        <div style="font-size:11px;color:var(--color-text-secondary)">Pipeline</div>
+        <div style="font-size:13px;font-weight:500;margin-top:4px" class="mono">shopify-orders</div>
+      </div>
+      <div class="card" style="flex:1;min-width:140px;margin-bottom:0">
+        <div style="font-size:11px;color:var(--color-text-secondary)">Latency</div>
+        <div style="font-size:13px;font-weight:500;color:#E24B4A;margin-top:4px">2,412ms</div>
+      </div>
+      <div class="card" style="flex:1;min-width:140px;margin-bottom:0">
+        <div style="font-size:11px;color:var(--color-text-secondary)">Time</div>
+        <div style="font-size:13px;font-weight:500;margin-top:4px">Today 14:32:07</div>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab active">Request payload</div>
+      <div class="tab">Response body</div>
+      <div class="tab">Headers</div>
+      <div class="tab">Payload diff</div>
+      <div class="tab">Replay history</div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div style="font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:6px">Incoming payload (from Shopify)</div>
+        <div class="payload-box">
+<span class="diff-neutral">{</span>
+<span class="diff-neutral">  "id": 820982911946154508,</span>
+<span class="diff-neutral">  "email": "jon@doe.ca",</span>
+<span class="diff-add">  "financial_status": "paid",</span>
+<span class="diff-neutral">  "total_price": "598.94",</span>
+<span class="diff-remove">  "currency": "USD"</span>
+<span class="diff-add">  "currency": "CAD"</span>
+<span class="diff-neutral">  "line_items": [...]</span>
+<span class="diff-neutral">}</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;font-size:10px;color:var(--color-text-tertiary)"><span style="color:#3B6D11">■ Added</span><span style="color:#A32D2D">■ Removed</span><span>■ Unchanged</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:6px">Your server response</div>
+        <div class="payload-box" style="border-color:var(--color-border-danger)">
+<span style="color:#A32D2D">HTTP/1.1 500 Internal Server Error</span>
+<span class="diff-neutral">Content-Type: application/json</span>
+<span class="diff-neutral">{</span>
+<span class="diff-neutral">  "error": "Unhandled currency",</span>
+<span class="diff-neutral">  "message": "CAD not in</span>
+<span class="diff-neutral">   supported_currencies"</span>
+<span class="diff-neutral">}</span>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:8px;padding:8px;background:var(--color-background-danger);border-radius:var(--border-radius-md)"><i class="ti ti-bulb" style="font-size:12px" aria-hidden="true"></i> Likely cause: currency field changed from USD → CAD. Your handler doesn't support CAD.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 8: ALERT CONFIGURATION -->
+<div class="page">
+<div class="page-label">Page 8 — Alert rules</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="font-size:13px;color:var(--color-text-secondary)">Alert rules</div>
+  <button class="btn btn-sm btn-primary"><i class="ti ti-plus" aria-hidden="true"></i> New rule</button>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="sidebar-item"><i class="ti ti-git-branch" aria-hidden="true"></i> Pipelines</div>
+    <div class="sidebar-item"><i class="ti ti-list-details" aria-hidden="true"></i> Event logs</div>
+    <div class="sidebar-item"><i class="ti ti-player-play" aria-hidden="true"></i> Replay queue</div>
+    <div class="sidebar-section">Alerts</div>
+    <div class="sidebar-item active"><i class="ti ti-bell-ringing" aria-hidden="true"></i> Alert rules</div>
+    <div class="sidebar-item"><i class="ti ti-history" aria-hidden="true"></i> Alert history</div>
+    <div class="sidebar-section">Workspace</div>
+    <div class="sidebar-item"><i class="ti ti-users" aria-hidden="true"></i> Team</div>
+    <div class="sidebar-item"><i class="ti ti-key" aria-hidden="true"></i> API keys</div>
+    <div class="sidebar-item"><i class="ti ti-credit-card" aria-hidden="true"></i> Billing</div>
+    <div class="sidebar-item"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+  </div>
+  <div class="main">
+    <div class="page-title">Alert rules</div>
+    <div class="card">
+      <div class="section-head" style="margin-bottom:0.5rem"><div class="section-title">Notification channels</div><button class="btn btn-sm"><i class="ti ti-plus" aria-hidden="true"></i> Add channel</button></div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:0.75rem">Where should alerts be delivered?</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)">
+          <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-brand-slack" style="font-size:16px;color:#185FA5" aria-hidden="true"></i><div><div style="font-size:12px;font-weight:500">#alerts-prod</div><div style="font-size:10px;color:var(--color-text-tertiary)">Connected</div></div></div>
+          <div class="toggle on"><div class="toggle-knob"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)">
+          <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-mail" style="font-size:16px;color:var(--color-text-secondary)" aria-hidden="true"></i><div><div style="font-size:12px;font-weight:500">jon@company.com</div><div style="font-size:10px;color:var(--color-text-tertiary)">Email</div></div></div>
+          <div class="toggle on"><div class="toggle-knob"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)">
+          <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-brand-discord" style="font-size:16px;color:var(--color-text-tertiary)" aria-hidden="true"></i><div><div style="font-size:12px;font-weight:500">Discord</div><div style="font-size:10px;color:var(--color-text-tertiary)">Not connected</div></div></div>
+          <button class="btn btn-sm">Connect</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-head" style="margin-bottom:0"><div class="section-title">Active rules</div></div>
+      <div class="alert-rule">
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Any 5xx response</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">All pipelines → Slack + Email — immediate</div></div>
+        <div class="toggle on" style="margin-right:10px"><div class="toggle-knob"></div></div>
+        <button class="btn btn-sm"><i class="ti ti-edit" aria-hidden="true"></i></button>
+      </div>
+      <div class="alert-rule">
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Latency &gt; 3s</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">shopify-orders → Slack — immediate</div></div>
+        <div class="toggle on" style="margin-right:10px"><div class="toggle-knob"></div></div>
+        <button class="btn btn-sm"><i class="ti ti-edit" aria-hidden="true"></i></button>
+      </div>
+      <div class="alert-rule">
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Failure rate &gt; 10% in 5 min</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">All pipelines → Email — 5 min window</div></div>
+        <div class="toggle on" style="margin-right:10px"><div class="toggle-knob"></div></div>
+        <button class="btn btn-sm"><i class="ti ti-edit" aria-hidden="true"></i></button>
+      </div>
+      <div class="alert-rule">
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">No events for 1 hour</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">stripe-prod → Slack + Email — inactivity</div></div>
+        <div class="toggle" style="margin-right:10px"><div class="toggle-knob"></div></div>
+        <button class="btn btn-sm"><i class="ti ti-edit" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 9: TEAM -->
+<div class="page">
+<div class="page-label">Page 9 — Team management</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="font-size:13px;color:var(--color-text-secondary)">Team</div>
+  <button class="btn btn-sm btn-primary"><i class="ti ti-mail" aria-hidden="true"></i> Invite member</button>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="sidebar-item"><i class="ti ti-git-branch" aria-hidden="true"></i> Pipelines</div>
+    <div class="sidebar-item"><i class="ti ti-list-details" aria-hidden="true"></i> Event logs</div>
+    <div class="sidebar-item"><i class="ti ti-player-play" aria-hidden="true"></i> Replay queue</div>
+    <div class="sidebar-section">Alerts</div>
+    <div class="sidebar-item"><i class="ti ti-bell-ringing" aria-hidden="true"></i> Alert rules</div>
+    <div class="sidebar-item"><i class="ti ti-history" aria-hidden="true"></i> Alert history</div>
+    <div class="sidebar-section">Workspace</div>
+    <div class="sidebar-item active"><i class="ti ti-users" aria-hidden="true"></i> Team</div>
+    <div class="sidebar-item"><i class="ti ti-key" aria-hidden="true"></i> API keys</div>
+    <div class="sidebar-item"><i class="ti ti-credit-card" aria-hidden="true"></i> Billing</div>
+    <div class="sidebar-item"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+  </div>
+  <div class="main">
+    <div class="page-title">Team</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Member</th><th>Email</th><th>Role</th><th>Joined</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar">JS</div><span style="font-size:12px;font-weight:500">Jon Smith</span></div></td>
+            <td style="color:var(--color-text-secondary);font-size:12px">jon@company.com</td>
+            <td><span class="badge badge-info">Owner</span></td>
+            <td style="color:var(--color-text-secondary);font-size:12px">Mar 2026</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="background:#E1F5EE;color:#0F6E56">AP</div><span style="font-size:12px;font-weight:500">Amy Park</span></div></td>
+            <td style="color:var(--color-text-secondary);font-size:12px">amy@company.com</td>
+            <td><span class="badge badge-gray">Admin</span></td>
+            <td style="color:var(--color-text-secondary);font-size:12px">Apr 2026</td>
+            <td><button class="btn btn-sm">Edit</button></td>
+          </tr>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="background:#FAEEDA;color:#854F0B">RK</div><span style="font-size:12px;font-weight:500">Raj Kumar</span></div></td>
+            <td style="color:var(--color-text-secondary);font-size:12px">raj@company.com</td>
+            <td><span class="badge badge-gray">Viewer</span></td>
+            <td style="color:var(--color-text-secondary);font-size:12px">May 2026</td>
+            <td><button class="btn btn-sm">Edit</button></td>
+          </tr>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="background:#F1EFE8;color:#5F5E5A">?</div><span style="font-size:12px;color:var(--color-text-secondary)">Pending invite</span></div></td>
+            <td style="color:var(--color-text-secondary);font-size:12px">dev@partner.com</td>
+            <td><span class="badge badge-warn">Invited</span></td>
+            <td style="color:var(--color-text-secondary);font-size:12px">—</td>
+            <td><button class="btn btn-sm">Revoke</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:0.75rem">Role permissions</div>
+      <table>
+        <thead><tr><th>Permission</th><th>Owner</th><th>Admin</th><th>Viewer</th></tr></thead>
+        <tbody>
+          <tr><td style="font-size:12px">View logs & events</td><td>✓</td><td>✓</td><td>✓</td></tr>
+          <tr><td style="font-size:12px">Replay events</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td style="font-size:12px">Edit pipelines</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td style="font-size:12px">Manage alerts</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td style="font-size:12px">Billing & plan</td><td>✓</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 10: BILLING -->
+<div class="page">
+<div class="page-label">Page 10 — Billing & plan</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="font-size:13px;color:var(--color-text-secondary)">Billing</div>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="sidebar-item"><i class="ti ti-git-branch" aria-hidden="true"></i> Pipelines</div>
+    <div class="sidebar-item"><i class="ti ti-list-details" aria-hidden="true"></i> Event logs</div>
+    <div class="sidebar-item"><i class="ti ti-player-play" aria-hidden="true"></i> Replay queue</div>
+    <div class="sidebar-section">Alerts</div>
+    <div class="sidebar-item"><i class="ti ti-bell-ringing" aria-hidden="true"></i> Alert rules</div>
+    <div class="sidebar-item"><i class="ti ti-history" aria-hidden="true"></i> Alert history</div>
+    <div class="sidebar-section">Workspace</div>
+    <div class="sidebar-item"><i class="ti ti-users" aria-hidden="true"></i> Team</div>
+    <div class="sidebar-item"><i class="ti ti-key" aria-hidden="true"></i> API keys</div>
+    <div class="sidebar-item active"><i class="ti ti-credit-card" aria-hidden="true"></i> Billing</div>
+    <div class="sidebar-item"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+  </div>
+  <div class="main">
+    <div class="page-title">Billing</div>
+    <div class="two-col">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px">Current plan</div>
+            <div style="font-size:16px;font-weight:500">Pro</div>
+            <div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px">$49/month · renews June 1</div>
+          </div>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="divider"></div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px">Event usage this month</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>284,210 / 500,000</span><span style="color:var(--color-text-secondary)">57%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>
+        <div style="display:flex;gap:8px;margin-top:1rem">
+          <button class="btn btn-sm">Upgrade plan</button>
+          <button class="btn btn-sm">Cancel plan</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:500;margin-bottom:0.75rem">Payment method</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)">
+          <i class="ti ti-credit-card" style="font-size:18px;color:var(--color-text-secondary)" aria-hidden="true"></i>
+          <div><div style="font-size:12px;font-weight:500">Visa ending 4242</div><div style="font-size:11px;color:var(--color-text-tertiary)">Expires 08/2028</div></div>
+          <button class="btn btn-sm" style="margin-left:auto">Update</button>
+        </div>
+        <div style="font-size:13px;font-weight:500;margin:1rem 0 0.75rem">Billing history</div>
+        <table><thead><tr><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td style="font-size:12px">May 1, 2026</td><td style="font-size:12px">$49.00</td><td><span class="badge badge-success">Paid</span></td><td><i class="ti ti-download" style="font-size:13px;color:var(--color-text-tertiary)" aria-hidden="true"></i></td></tr>
+          <tr><td style="font-size:12px">Apr 1, 2026</td><td style="font-size:12px">$49.00</td><td><span class="badge badge-success">Paid</span></td><td><i class="ti ti-download" style="font-size:13px;color:var(--color-text-tertiary)" aria-hidden="true"></i></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 11: SETTINGS -->
+<div class="page">
+<div class="page-label">Page 11 — Workspace settings</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="font-size:13px;color:var(--color-text-secondary)">Settings</div>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="sidebar-item"><i class="ti ti-git-branch" aria-hidden="true"></i> Pipelines</div>
+    <div class="sidebar-item"><i class="ti ti-list-details" aria-hidden="true"></i> Event logs</div>
+    <div class="sidebar-item"><i class="ti ti-player-play" aria-hidden="true"></i> Replay queue</div>
+    <div class="sidebar-section">Alerts</div>
+    <div class="sidebar-item"><i class="ti ti-bell-ringing" aria-hidden="true"></i> Alert rules</div>
+    <div class="sidebar-item"><i class="ti ti-history" aria-hidden="true"></i> Alert history</div>
+    <div class="sidebar-section">Workspace</div>
+    <div class="sidebar-item"><i class="ti ti-users" aria-hidden="true"></i> Team</div>
+    <div class="sidebar-item"><i class="ti ti-key" aria-hidden="true"></i> API keys</div>
+    <div class="sidebar-item"><i class="ti ti-credit-card" aria-hidden="true"></i> Billing</div>
+    <div class="sidebar-item active"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+  </div>
+  <div class="main">
+    <div class="page-title">Settings</div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:0.75rem">Workspace</div>
+      <div class="form-row"><label class="form-label">Workspace name</label><div class="form-input">Acme Corp</div></div>
+      <div class="form-row"><label class="form-label">Workspace slug</label><div class="form-input mono">acme-corp</div><div class="form-hint">Used in your proxy URLs: in.hookwatch.io/acme-corp/...</div></div>
+      <button class="btn btn-sm btn-primary">Save changes</button>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:0.75rem">Data & privacy</div>
+      <div class="alert-rule">
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Default log retention</div><div style="font-size:11px;color:var(--color-text-secondary)">Auto-delete events after</div></div>
+        <div class="form-input" style="width:120px;font-size:12px">30 days ▾</div>
+      </div>
+      <div class="alert-rule">
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Encrypt payload bodies</div><div style="font-size:11px;color:var(--color-text-secondary)">AES-256 per-workspace key</div></div>
+        <div class="toggle on"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="alert-rule">
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">Mask sensitive fields</div><div style="font-size:11px;color:var(--color-text-secondary)">Redact card numbers, tokens in logs</div></div>
+        <div class="toggle on"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:0.75rem">Danger zone</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><div style="font-size:12px;font-weight:500">Delete workspace</div><div style="font-size:11px;color:var(--color-text-secondary)">Permanently delete all pipelines, logs, and data</div></div>
+        <button class="btn btn-sm btn-danger">Delete workspace</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 12: NOTIFICATIONS / ALERT HISTORY -->
+<div class="page" style="margin-bottom:0">
+<div class="page-label">Page 12 — Notification & alert history</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>HookWatch</div>
+  <div style="font-size:13px;color:var(--color-text-secondary)">Alert history</div>
+  <button class="btn btn-sm">Mark all read</button>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="sidebar-item"><i class="ti ti-git-branch" aria-hidden="true"></i> Pipelines</div>
+    <div class="sidebar-item"><i class="ti ti-list-details" aria-hidden="true"></i> Event logs</div>
+    <div class="sidebar-item"><i class="ti ti-player-play" aria-hidden="true"></i> Replay queue</div>
+    <div class="sidebar-section">Alerts</div>
+    <div class="sidebar-item"><i class="ti ti-bell-ringing" aria-hidden="true"></i> Alert rules</div>
+    <div class="sidebar-item active"><i class="ti ti-history" aria-hidden="true"></i> Alert history</div>
+    <div class="sidebar-section">Workspace</div>
+    <div class="sidebar-item"><i class="ti ti-users" aria-hidden="true"></i> Team</div>
+    <div class="sidebar-item"><i class="ti ti-key" aria-hidden="true"></i> API keys</div>
+    <div class="sidebar-item"><i class="ti ti-credit-card" aria-hidden="true"></i> Billing</div>
+    <div class="sidebar-item"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+  </div>
+  <div class="main">
+    <div class="page-title">Alert history</div>
+    <div class="card">
+      <div class="notif-item">
+        <div class="notif-icon notif-danger"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">shopify-orders returned 500 — 812 failures in 1 hour</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">Sent to #alerts-prod and jon@company.com · Today 14:32</div></div>
+        <button class="btn btn-sm">View event</button>
+      </div>
+      <div class="notif-item">
+        <div class="notif-icon notif-danger"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">clerk-auth latency exceeded 3s threshold</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">Sent to #alerts-prod · Today 11:14</div></div>
+        <button class="btn btn-sm">View event</button>
+      </div>
+      <div class="notif-item">
+        <div class="notif-icon notif-success"><i class="ti ti-check" aria-hidden="true"></i></div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">shopify-orders recovered — success rate back to 98%</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">Auto-resolved · Yesterday 22:07</div></div>
+        <span class="badge badge-success">Resolved</span>
+      </div>
+      <div class="notif-item">
+        <div class="notif-icon notif-info"><i class="ti ti-info-circle" aria-hidden="true"></i></div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">stripe-prod: no events received for 65 minutes</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">Inactivity alert · Yesterday 03:12</div></div>
+        <button class="btn btn-sm">View pipeline</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
