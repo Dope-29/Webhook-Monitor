@@ -1,0 +1,105 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { IconCheck, IconCopy } from '@tabler/icons-react';
+import client from '../api/client';
+
+const STEPS = [
+  { n: 1, label: 'Create account', done: true },
+  { n: 2, label: 'Set up your first pipeline', done: false },
+  { n: 3, label: 'Configure alerts', done: false },
+];
+
+export default function OnboardingPage() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ name: 'Stripe Production', destination_url: 'https://api.yourapp.com/webhooks/stripe', provider: '', retention_days: 30 });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await client.post('/api/pipelines', { ...form, retention_days: Number(form.retention_days) });
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to create pipeline.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const proxyUrl = 'https://in.hookwatch.io/p/abc123xyz';
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--color-background-tertiary)' }}>
+      <header className="topbar" style={{ background: 'var(--color-background-primary)' }}>
+        <div className="logo"><div className="logo-dot" />HookWatch</div>
+        <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>Step 2 of 3 — Set up your first pipeline</div>
+        <button className="btn btn-sm" onClick={() => navigate('/dashboard')}>Skip for now</button>
+      </header>
+
+      <div style={{ padding: '2rem' }}>
+        <div style={{ maxWidth: 520, margin: '0 auto' }}>
+          {/* Step indicator */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: '1.5rem' }}>
+            {STEPS.map((step, i) => (
+              <>
+                <div key={step.n} style={{
+                  width: 24, height: 24, borderRadius: '50%',
+                  background: step.done ? '#EAF3DE' : i === 1 ? '#185FA5' : 'var(--color-background-secondary)',
+                  color: step.done ? '#3B6D11' : i === 1 ? '#E6F1FB' : 'var(--color-text-tertiary)',
+                  fontSize: 10, fontWeight: 500,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {step.done ? <IconCheck size={10} stroke={2.5} /> : step.n}
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div key={`line-${i}`} style={{ height: 2, flex: 1, background: i === 0 ? '#EAF3DE' : 'var(--color-border-tertiary)' }} />
+                )}
+              </>
+            ))}
+          </div>
+
+          <form onSubmit={handleCreate}>
+            <div className="card">
+              <div style={{ fontSize: 14, fontWeight: 500, marginBottom: '1rem' }}>Create your first pipeline</div>
+
+              {error && <div style={{ fontSize: 12, color: 'var(--color-red)', marginBottom: '0.75rem' }}>{error}</div>}
+
+              <div className="form-row">
+                <label className="form-label">Pipeline name</label>
+                <input className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+              </div>
+              <div className="form-row">
+                <label className="form-label">Destination URL <span style={{ color: 'var(--color-text-tertiary)' }}>(your actual server)</span></label>
+                <input className="form-input" type="url" value={form.destination_url} onChange={e => setForm(f => ({ ...f, destination_url: e.target.value }))} required />
+              </div>
+              <div className="form-row">
+                <label className="form-label">Retention (days)</label>
+                <input className="form-input" type="number" min={1} max={365} value={form.retention_days} onChange={e => setForm(f => ({ ...f, retention_days: e.target.value }))} required />
+              </div>
+
+              <div className="divider" />
+
+              <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8 }}>
+                Your proxy URL <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--color-text-tertiary)' }}>(use this in your provider's dashboard)</span>
+              </div>
+              <div className="url-pill" style={{ width: '100%', justifyContent: 'space-between' }}>
+                <span>{proxyUrl}</span>
+                <IconCopy size={13} stroke={1.5} style={{ cursor: 'pointer' }} onClick={() => navigator.clipboard.writeText(proxyUrl)} />
+              </div>
+              <div className="form-hint" style={{ marginTop: 6 }}>
+                Copy this URL and paste it where you'd normally put your server URL in your webhook provider settings.
+              </div>
+
+              <button className="btn btn-primary" type="submit" disabled={loading} style={{ marginTop: '1.25rem' }}>
+                {loading ? 'Creating...' : 'Create pipeline →'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
