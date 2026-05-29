@@ -24,12 +24,12 @@ export default function PipelineDetail() {
   useEffect(() => {
     Promise.all([
       client.get('/api/pipelines'),
-      client.get(`/api/events?limit=10`),
+      client.get(`/api/events?pipeline_id=${id}&limit=20`),
     ]).then(([p, e]) => {
       const found = (p.data.pipelines || []).find(pl => pl.id === id);
       setPipeline(found);
       if (found) setForm({ name: found.name, destination_url: found.destination_url, timeout: found.timeout, retention_days: found.retention_days });
-      setEvents((e.data.events || []).filter(ev => ev.pipeline_id === id));
+      setEvents(e.data.events || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
@@ -105,14 +105,14 @@ export default function PipelineDetail() {
           <div className="section-title" style={{ marginBottom: '0.75rem' }}>Pipeline config</div>
           <div style={{ fontSize: 12 }}>
             {[
+              ['Proxy URL (ingest)', `http://localhost:5000/webhook/${id}`],
               ['Destination', pipeline.destination_url],
               ['Timeout', `${pipeline.timeout / 1000}s`],
-              ['Retry on failure', '3× with backoff'],
               ['Retention', `${pipeline.retention_days} days`],
             ].map(([k, v]) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '0.5px solid var(--color-border-tertiary)' }}>
-                <span style={{ color: 'var(--color-text-secondary)' }}>{k}</span>
-                <span className="mono">{v}</span>
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '0.5px solid var(--color-border-tertiary)', gap: 12 }}>
+                <span style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}>{k}</span>
+                <span className="mono" style={{ textAlign: 'right', wordBreak: 'break-all', fontSize: 11 }}>{v}</span>
               </div>
             ))}
           </div>

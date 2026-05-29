@@ -14,19 +14,28 @@ async function list(req, res, next) {
     const page  = Math.max(parseInt(req.query.page  || '1',  10), 1);
     const limit = Math.min(parseInt(req.query.limit || '20', 10), 100);
     const offset = (page - 1) * limit;
+    const { pipeline_id } = req.query;
+
+    // Build parameterised query — optionally scope to a single pipeline
+    const baseParams = [req.user.customer_id];
+    let pipelineFilter = '';
+    if (pipeline_id) {
+      baseParams.push(pipeline_id);
+      pipelineFilter = `AND pipeline_id = $${baseParams.length}`;
+    }
 
     const [dataResult, countResult] = await Promise.all([
       db.query(
         `SELECT id, pipeline_id, status_code, latency_ms, created_at, expires_at
          FROM webhooks
-         WHERE customer_id = $1
+         WHERE customer_id = $1 ${pipelineFilter}
          ORDER BY created_at DESC
-         LIMIT $2 OFFSET $3`,
-        [req.user.customer_id, limit, offset]
+         LIMIT $${baseParams.length + 1} OFFSET $${baseParams.length + 2}`,
+        [...baseParams, limit, offset]
       ),
       db.query(
-        'SELECT COUNT(*) FROM webhooks WHERE customer_id = $1',
-        [req.user.customer_id]
+        `SELECT COUNT(*) FROM webhooks WHERE customer_id = $1 ${pipelineFilter}`,
+        baseParams
       ),
     ]);
 
