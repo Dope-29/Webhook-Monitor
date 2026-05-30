@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Allow: /pricing
+Disallow: /dashboard
+Disallow: /pipelines
+Disallow: /events
+Disallow: /alerts
+Disallow: /settings
+Disallow: /billing
+Disallow: /team
+Disallow: /api-keys
+Disallow: /replay
+Disallow: /onboarding
+Disallow: /oauth-callback
+
+Sitemap: https://hookwatch.io/sitemap.xml

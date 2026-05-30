@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '../components/Layout/AppLayout';
 import client from '../api/client';
+import useAuthStore from '../store/authStore';
+import { useConfirm } from '../components/ConfirmModal';
+import { toastSuccess, toastError } from '../store/toastStore';
 
 export default function SettingsPage() {
+  const { setUserName } = useAuthStore();
+  const confirm = useConfirm();
   const [settings, setSettings] = useState(null);
   const [retentionDays, setRetentionDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     client.get('/api/settings')
       .then(r => {
         setSettings(r.data.settings);
         setRetentionDays(r.data.settings.default_retention_days ?? 30);
+        if (r.data.settings.name) setUserName(r.data.settings.name);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -30,6 +37,7 @@ export default function SettingsPage() {
       });
       setSettings(data.settings);
       setSaved(true);
+      toastSuccess('Retention settings saved.');
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save.');
@@ -112,9 +120,27 @@ export default function SettingsPage() {
           </div>
           <button
             className="btn btn-sm btn-danger"
-            onClick={() => confirm('This will permanently delete all event data. Are you sure?')}
+            disabled={deleting}
+            onClick={async () => {
+              const ok = await confirm({
+                title: 'Delete all event data?',
+                message: 'This will permanently delete all captured webhook events. This cannot be undone.',
+                confirmLabel: 'Delete all',
+                danger: true,
+              });
+              if (!ok) return;
+              setDeleting(true);
+              try {
+                const { data } = await client.delete('/api/events');
+                toastSuccess(`Deleted ${data.deleted} event${data.deleted !== 1 ? 's' : ''}.`);
+              } catch {
+                toastError('Failed to delete events.');
+              } finally {
+                setDeleting(false);
+              }
+            }}
           >
-            Delete events
+            {deleting ? 'Deleting…' : 'Delete events'}
           </button>
         </div>
       </div>

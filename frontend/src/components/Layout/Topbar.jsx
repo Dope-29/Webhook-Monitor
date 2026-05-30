@@ -1,33 +1,50 @@
 import { useNavigate } from 'react-router-dom';
-import { IconBell, IconLoader2 } from '@tabler/icons-react';
+import { IconBell, IconMenu2 } from '@tabler/icons-react';
 import useAuthStore from '../../store/authStore';
 
-export default function Topbar({ title, actions, breadcrumb }) {
+export default function Topbar({ actions, breadcrumb, onMenuToggle }) {
   const navigate = useNavigate();
-  const { logout, customerId } = useAuthStore();
-  const initials = customerId ? customerId.slice(0, 2).toUpperCase() : '??';
+  const { logout, userName } = useAuthStore();
+
+  const initials = userName
+    ? userName.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+    : 'ME';
 
   return (
     <header className="topbar">
+      {/* Mobile hamburger */}
+      <button className="mobile-menu-btn" onClick={onMenuToggle} title="Menu" aria-label="Open navigation">
+        <IconMenu2 size={18} />
+      </button>
+
+      {/* Logo */}
       <div className="logo" onClick={() => navigate('/dashboard')}>
         <div className="logo-dot" />
         HookWatch
       </div>
 
+      {/* Breadcrumb */}
       {breadcrumb && (
-        <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+        <div className="breadcrumb" style={{ flex: 1 }}>
           {breadcrumb}
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* Right side */}
+      <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
         {actions}
-        <IconBell size={16} stroke={1.5} style={{ color: 'var(--color-text-secondary)', cursor: 'pointer' }} />
+        <IconBell
+          size={16}
+          stroke={1.5}
+          style={{ color: 'var(--color-text-secondary)', cursor: 'pointer', flexShrink: 0 }}
+          onClick={() => navigate('/alerts/history')}
+          title="Alert history"
+        />
         <div
           className="avatar"
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', flexShrink: 0 }}
           onClick={logout}
-          title="Click to log out"
+          title={`${userName || 'Account'} — click to log out`}
         >
           {initials}
         </div>

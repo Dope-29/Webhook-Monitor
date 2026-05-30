@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IconSearch } from '@tabler/icons-react';
 import AppLayout from '../components/Layout/AppLayout';
 import client from '../api/client';
+import { SkeletonTableBody } from '../components/Skeleton';
 
 function StatusBadge({ code }) {
   if (!code) return <span className="badge badge-gray">Pending</span>;
@@ -45,7 +46,10 @@ export default function EventLogsPage() {
         </div>
 
         {loading ? (
-          <div className="empty-state">Loading events…</div>
+          <table>
+            <thead><tr><th>Event ID</th><th>Pipeline</th><th>Status</th><th>Latency</th><th>Created</th><th>Expires</th></tr></thead>
+            <SkeletonTableBody rows={8} cols={6} />
+          </table>
         ) : events.length === 0 ? (
           <div className="empty-state">No events yet. Send a webhook to any pipeline to get started.</div>
         ) : (

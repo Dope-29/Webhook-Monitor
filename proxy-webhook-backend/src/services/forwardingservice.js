@@ -5,7 +5,8 @@
  *
  * Decrypts a stored webhook payload and POSTs it to the pipeline's destination_url.
  * Retry schedule: immediate → 1 min → 5 min → 15 min (then mark permanently failed).
- * This function is always called fire-and-forget (no await at call site).
+ * Captures response status + body (truncated to 4KB) for the Event Inspector.
+ * Writes a replay_attempt row on every attempt.
  */
 
 const axios = require('axios');
@@ -14,9 +15,17 @@ const { getDEKByKeyId, decryptPayload } = require('./encryptionservice');
 const logger = require('./loggerservice');
 
 const RETRY_DELAYS_MS = [60_000, 300_000, 900_000]; // 1 min, 5 min, 15 min
+const MAX_RESPONSE_BODY = 4096; // 4 KB cap
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Safely truncate response body to MAX_RESPONSE_BODY bytes */
+function truncateBody(body) {
+  if (!body) return null;
+  const str = typeof body === 'object' ? JSON.stringify(body) : String(body);
+  return str.length > MAX_RESPONSE_BODY ? str.slice(0, MAX_RESPONSE_BODY) + '…' : str;
 }
 
 async function forwardWebhook(webhookId, pipeline) {
@@ -33,7 +42,6 @@ async function forwardWebhook(webhookId, pipeline) {
 
   const { encrypted_payload, iv, auth_tag, key_id } = webhookResult.rows[0];
 
-  // Decrypt in memory — DEK is never written to a variable that escapes this function
   const dek = await getDEKByKeyId(key_id);
   const rawPayload = decryptPayload(encrypted_payload, iv, auth_tag, dek);
 
@@ -41,16 +49,17 @@ async function forwardWebhook(webhookId, pipeline) {
   try {
     parsedPayload = JSON.parse(rawPayload);
   } catch {
-    parsedPayload = rawPayload; // forward as plain string if not valid JSON
+    parsedPayload = rawPayload;
   }
 
-  // Build axios config
   const axiosConfig = {
     timeout: pipeline.timeout || 10000,
     headers: {
       'Content-Type': 'application/json',
-      'X-Webhook-Source': 'WebhookMonitor/1.0',
+      'X-Webhook-Source': 'HookWatch/1.0',
     },
+    // Don't throw on non-2xx — capture the response instead
+    validateStatus: () => true,
   };
 
   if (pipeline.proxy_url) {
@@ -66,42 +75,68 @@ async function forwardWebhook(webhookId, pipeline) {
     }
   }
 
-  // Attempt + retry loop
-  let lastError;
+  let lastError = null;
+
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     const start = Date.now();
+    let statusCode = null;
+    let responseBody = null;
+    let errorMessage = null;
+
     try {
       const response = await axios.post(pipeline.destination_url, parsedPayload, axiosConfig);
       const latency = Date.now() - start;
+      statusCode = response.status;
+      responseBody = truncateBody(response.data);
 
+      // Write replay attempt
       await db.query(
-        'UPDATE webhooks SET status_code = $1, latency_ms = $2 WHERE id = $3',
-        [response.status, latency, webhookId]
+        `INSERT INTO replay_attempts (webhook_id, status_code, latency_ms)
+         VALUES ($1, $2, $3)`,
+        [webhookId, statusCode, latency]
       );
 
-      logger.info('Webhook forwarded successfully', {
-        webhookId, status: response.status, latency, destination: pipeline.destination_url,
-      });
-      return; // success — exit
+      // Update webhook with final status + captured response
+      await db.query(
+        `UPDATE webhooks
+         SET status_code = $1, latency_ms = $2, response_status = $3, response_body = $4
+         WHERE id = $5`,
+        [statusCode, latency, statusCode, responseBody, webhookId]
+      );
+
+      const isSuccess = statusCode >= 200 && statusCode < 300;
+      if (isSuccess) {
+        logger.info('Webhook forwarded successfully', { webhookId, status: statusCode, latency });
+        return;
+      }
+
+      // Non-2xx — treat as failure, try retry
+      lastError = new Error(`HTTP ${statusCode}`);
+      logger.warn(`Webhook forward attempt ${attempt + 1} got non-2xx`, { webhookId, status: statusCode });
 
     } catch (err) {
       lastError = err;
-      const statusCode = err.response?.status ?? 0;
+      statusCode = -1;
+      errorMessage = err.message;
       const latency = Date.now() - start;
 
-      logger.warn(`Webhook forward attempt ${attempt + 1} failed`, {
-        webhookId, status: statusCode, latency, error: err.message,
-      });
+      await db.query(
+        `INSERT INTO replay_attempts (webhook_id, status_code, latency_ms, error_message)
+         VALUES ($1, $2, $3, $4)`,
+        [webhookId, statusCode, latency, errorMessage]
+      );
 
-      if (attempt < RETRY_DELAYS_MS.length) {
-        await sleep(RETRY_DELAYS_MS[attempt]);
-      }
+      logger.warn(`Webhook forward attempt ${attempt + 1} failed`, { webhookId, error: err.message });
+    }
+
+    if (attempt < RETRY_DELAYS_MS.length) {
+      await sleep(RETRY_DELAYS_MS[attempt]);
     }
   }
 
-  // Permanently failed — status_code -1 signals permanent failure in the DB
+  // Permanently failed
   await db.query(
-    'UPDATE webhooks SET status_code = $1 WHERE id = $2',
+    `UPDATE webhooks SET status_code = $1, response_status = NULL WHERE id = $2`,
     [-1, webhookId]
   );
 

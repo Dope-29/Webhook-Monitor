@@ -21,6 +21,7 @@ const app = require('./app');
 const db = require('./config/database');
 const { initializeDatabaseSchema } = require('./models/schemaInit');
 const { startRetentionJob } = require('./jobs/retentioncleanup');
+const { evaluateAllRules }  = require('./services/alertevaluatorservice');
 const logger = require('./services/loggerservice');
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
@@ -36,6 +37,15 @@ async function startServer() {
 
     // 3. Start background cron jobs
     startRetentionJob();
+
+    // Alert rule evaluator — runs every minute
+    const cron = require('node-cron');
+    cron.schedule('* * * * *', () => {
+      evaluateAllRules().catch(err =>
+        logger.error('Alert evaluator uncaught error', { error: err.message })
+      );
+    });
+    logger.info('Alert rule evaluator scheduled (every minute).');
 
     // 4. Bind to port
     const server = app.listen(PORT, () => {

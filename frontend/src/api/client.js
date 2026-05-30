@@ -14,14 +14,25 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// Global 401 handler — auto-logout on expired token
+// Global response handler — auto-logout on 401, retry once on network error
 client.interceptors.response.use(
   (res) => res,
-  (err) => {
+  async (err) => {
+    // Auto-logout on expired / invalid token
     if (err.response?.status === 401) {
       useAuthStore.getState().logout();
       window.location.href = '/login';
+      return Promise.reject(err);
     }
+
+    // Retry once on network error (no response received)
+    const config = err.config;
+    if (!err.response && !config._retried) {
+      config._retried = true;
+      await new Promise((r) => setTimeout(r, 500));
+      return client(config);
+    }
+
     return Promise.reject(err);
   }
 );

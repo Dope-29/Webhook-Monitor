@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IconEdit, IconPlayerPlay } from '@tabler/icons-react';
+import { IconEdit, IconPlayerPlay, IconCopy, IconCheck, IconSend } from '@tabler/icons-react';
 import AppLayout from '../components/Layout/AppLayout';
 import client from '../api/client';
+import { toastSuccess, toastError } from '../store/toastStore';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 function StatusBadge({ code }) {
   if (!code) return <span className="badge badge-gray">Pending</span>;
@@ -20,6 +23,9 @@ export default function PipelineDetail() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
+  const [pausing, setPausing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [testSending, setTestSending] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -39,9 +45,52 @@ export default function PipelineDetail() {
     setEditing(false);
   };
 
+  const handleTogglePause = async () => {
+    setPausing(true);
+    try {
+      const { data } = await client.put(`/api/pipelines/${id}`, { paused: !pipeline.paused });
+      setPipeline(data.pipeline);
+    } catch {}
+    setPausing(false);
+  };
+
+  const proxyUrl = `${BACKEND_URL}/webhook/${id}`;
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(proxyUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const handleTestEvent = async () => {
+    setTestSending(true);
+    try {
+      await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: true, source: 'HookWatch test event', timestamp: new Date().toISOString() }),
+      });
+      toastSuccess('Test event sent! Check Event logs.');
+      // Refresh event list after 1s
+      setTimeout(() => {
+        client.get(`/api/events?pipeline_id=${id}&limit=20`)
+          .then(r => setEvents(r.data.events || []))
+          .catch(() => {});
+      }, 1000);
+    } catch {
+      toastError('Failed to send test event.');
+    } finally {
+      setTestSending(false);
+    }
+  };
+
   const handleReplay = async (evId) => {
-    await client.post(`/api/events/${evId}/replay`);
-    alert('Replay initiated!');
+    try {
+      await client.post(`/api/events/${evId}/replay`);
+      toastSuccess('Replay initiated.');
+    } catch {
+      toastError('Failed to initiate replay.');
+    }
   };
 
   if (loading) return <AppLayout><div className="empty-state">Loading…</div></AppLayout>;
@@ -52,14 +101,20 @@ export default function PipelineDetail() {
       breadcrumb: <><span style={{ color: 'var(--color-text-tertiary)', cursor: 'pointer' }} onClick={() => navigate('/pipelines')}>Pipelines</span> / {pipeline.name}</>,
       actions: (
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-sm" onClick={handleTestEvent} disabled={testSending || pipeline.paused} title={pipeline.paused ? 'Resume pipeline first' : 'Send a test webhook event'}>
+            <IconSend size={13} /> {testSending ? 'Sending…' : 'Test'}
+          </button>
           <button className="btn btn-sm" onClick={() => setEditing(e => !e)}><IconEdit size={13} /> Edit</button>
-          <button className="btn btn-sm btn-danger">Pause</button>
+          <button className="btn btn-sm btn-danger" onClick={handleTogglePause} disabled={pausing}>
+            {pausing ? '…' : pipeline.paused ? 'Resume' : 'Pause'}
+          </button>
         </div>
       ),
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1rem' }}>
         <div className="page-title" style={{ margin: 0 }}>{pipeline.name}</div>
         {pipeline.provider && <span className="badge badge-gray">{pipeline.provider}</span>}
+        {pipeline.paused && <span className="badge badge-warn">Paused</span>}
       </div>
 
       <div className="metric-grid">
@@ -104,8 +159,17 @@ export default function PipelineDetail() {
         <div className="card">
           <div className="section-title" style={{ marginBottom: '0.75rem' }}>Pipeline config</div>
           <div style={{ fontSize: 12 }}>
+            {/* Proxy URL with copy button */}
+            <div style={{ padding: '5px 0', borderBottom: '0.5px solid var(--color-border-tertiary)' }}>
+              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 4 }}>Proxy URL (ingest)</div>
+              <div className="copy-row">
+                <span className="copy-row-text">{proxyUrl}</span>
+                <button className="btn btn-sm" style={{ flexShrink: 0, padding: '3px 8px' }} onClick={handleCopyUrl}>
+                  {copied ? <IconCheck size={12} stroke={2.5} style={{ color: 'var(--color-green)' }} /> : <IconCopy size={12} />}
+                </button>
+              </div>
+            </div>
             {[
-              ['Proxy URL (ingest)', `http://localhost:5000/webhook/${id}`],
               ['Destination', pipeline.destination_url],
               ['Timeout', `${pipeline.timeout / 1000}s`],
               ['Retention', `${pipeline.retention_days} days`],

@@ -9,7 +9,9 @@ const db = require('../config/database');
 async function list(req, res, next) {
   try {
     const result = await db.query(
-      'SELECT * FROM pipelines WHERE customer_id = $1 ORDER BY created_at DESC',
+      `SELECT id, name, destination_url, proxy_url, timeout, provider,
+              retention_days, paused, created_at
+       FROM pipelines WHERE customer_id = $1 ORDER BY created_at DESC`,
       [req.user.customer_id]
     );
     res.json({ pipelines: result.rows });
@@ -57,7 +59,7 @@ async function update(req, res, next) {
     }
 
     // Build dynamic SET clause from provided fields only
-    const ALLOWED_FIELDS = ['name', 'destination_url', 'proxy_url', 'timeout', 'provider', 'retention_days'];
+    const ALLOWED_FIELDS = ['name', 'destination_url', 'proxy_url', 'timeout', 'provider', 'retention_days', 'paused'];
     const setClauses = [];
     const values = [];
     let idx = 1;

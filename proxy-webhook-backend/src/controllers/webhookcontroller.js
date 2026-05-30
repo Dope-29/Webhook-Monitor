@@ -23,7 +23,7 @@ async function ingest(req, res, next) {
 
     // Look up pipeline — must exist and be active
     const pipelineResult = await db.query(
-      `SELECT id, customer_id, destination_url, proxy_url, timeout, retention_days
+      `SELECT id, customer_id, destination_url, proxy_url, timeout, retention_days, paused
        FROM pipelines WHERE id = $1`,
       [pipelineId]
     );
@@ -33,6 +33,10 @@ async function ingest(req, res, next) {
     }
 
     const pipeline = pipelineResult.rows[0];
+
+    if (pipeline.paused) {
+      return res.status(503).json({ error: 'Pipeline is paused.' });
+    }
 
     // Serialize the raw incoming body
     const rawPayload = JSON.stringify(req.body);

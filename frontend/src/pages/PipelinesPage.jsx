@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { IconPlus, IconEdit, IconTrash, IconCopy, IconCheck, IconArrowLeft } from '@tabler/icons-react';
 import AppLayout from '../components/Layout/AppLayout';
 import client from '../api/client';
+import { SkeletonTableBody } from '../components/Skeleton';
+import { useConfirm } from '../components/ConfirmModal';
+import { toastSuccess, toastError } from '../store/toastStore';
 
 const BLANK_FORM = { name: '', destination_url: '', retention_days: 30, provider: '' };
 
@@ -50,10 +53,22 @@ export default function PipelinesPage() {
     }
   };
 
+  const confirm = useConfirm();
   const handleDelete = async (id) => {
-    if (!confirm('Delete this pipeline? All associated events will also be deleted.')) return;
-    await client.delete(`/api/pipelines/${id}`).catch(() => {});
-    load();
+    const ok = await confirm({
+      title: 'Delete pipeline?',
+      message: 'All associated events will also be permanently deleted.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await client.delete(`/api/pipelines/${id}`);
+      toastSuccess('Pipeline deleted.');
+      load();
+    } catch {
+      toastError('Failed to delete pipeline.');
+    }
   };
 
   const proxyUrl = (id) => `http://localhost:5000/webhook/${id}`;
@@ -242,7 +257,10 @@ export default function PipelinesPage() {
 
       <div className="card">
         {loading ? (
-          <div className="empty-state">Loading pipelines…</div>
+          <table>
+            <thead><tr><th>Name</th><th>Destination</th><th>Provider</th><th>Retention</th><th>Proxy URL</th><th /></tr></thead>
+            <SkeletonTableBody rows={4} cols={6} />
+          </table>
         ) : pipelines.length === 0 ? (
           <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
             <div>No pipelines yet.</div>

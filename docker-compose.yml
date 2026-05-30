@@ -1,0 +1,95 @@
+version: '3.9'
+
+services:
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: hookwatch-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       hookwatch
+      POSTGRES_USER:     hookwatch
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_in_production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hookwatch"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hookwatch
+
+  # ── Backend ───────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./proxy-webhook-backend
+      dockerfile: Dockerfile
+    container_name: hookwatch-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV:          production
+      PORT:              5000
+      DATABASE_URL:      postgres://hookwatch:${POSTGRES_PASSWORD:-changeme_in_production}@postgres:5432/hookwatch
+      MASTER_KEY:        ${MASTER_KEY}
+      JWT_SECRET:        ${JWT_SECRET}
+      CORS_ORIGIN:       ${FRONTEND_BASE_URL:-http://localhost}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost}
+      BACKEND_BASE_URL:  ${BACKEND_BASE_URL:-http://localhost:5000}
+      # OAuth (optional)
+      GITHUB_CLIENT_ID:     ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID:     ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      # Stripe (optional)
+      STRIPE_SECRET_KEY:      ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      STRIPE_PRICE_STARTER:   ${STRIPE_PRICE_STARTER:-price_placeholder_starter}
+      STRIPE_PRICE_TEAM:      ${STRIPE_PRICE_TEAM:-price_placeholder_team}
+      STRIPE_WEBHOOK_SECRET:  ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+      # SMTP (optional)
+      SMTP_HOST: ${SMTP_HOST:-smtp.example.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-HookWatch <noreply@hookwatch.io>}
+    ports:
+      - "5000:5000"
+    networks:
+      - hookwatch
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health | grep -q 'ok'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ${BACKEND_BASE_URL:-http://localhost:5000}
+    container_name: hookwatch-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - hookwatch
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/nginx-health | grep -q 'ok'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+
+networks:
+  hookwatch:
+    driver: bridge

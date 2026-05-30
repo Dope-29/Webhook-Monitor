@@ -59,7 +59,7 @@ async function getById(req, res, next) {
   try {
     const result = await db.query(
       `SELECT id, pipeline_id, encrypted_payload, iv, auth_tag, key_id,
-              status_code, latency_ms, created_at, expires_at
+              status_code, latency_ms, response_status, response_body, created_at, expires_at
        FROM webhooks
        WHERE id = $1 AND customer_id = $2`,
       [req.params.id, req.user.customer_id]
@@ -89,6 +89,8 @@ async function getById(req, res, next) {
         payload,
         status_code: row.status_code,
         latency_ms: row.latency_ms,
+        response_status: row.response_status,
+        response_body: row.response_body,
         created_at: row.created_at,
         expires_at: row.expires_at,
       },
@@ -135,4 +137,50 @@ async function replay(req, res, next) {
   }
 }
 
-module.exports = { list, getById, replay };
+/**
+ * GET /api/events/:id/replay-history
+ * Returns all replay attempts for a given event (owned by caller).
+ */
+async function getReplayHistory(req, res, next) {
+  try {
+    // Ownership check first
+    const owned = await db.query(
+      'SELECT id FROM webhooks WHERE id = $1 AND customer_id = $2',
+      [req.params.id, req.user.customer_id]
+    );
+    if (owned.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found.' });
+    }
+
+    const result = await db.query(
+      `SELECT id, attempted_at, status_code, latency_ms, error_message
+       FROM replay_attempts
+       WHERE webhook_id = $1
+       ORDER BY attempted_at DESC
+       LIMIT 50`,
+      [req.params.id]
+    );
+
+    res.json({ attempts: result.rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * DELETE /api/events
+ * Permanently deletes all webhook events for the authenticated customer.
+ */
+async function deleteAll(req, res, next) {
+  try {
+    const result = await db.query(
+      'DELETE FROM webhooks WHERE customer_id = $1',
+      [req.user.customer_id]
+    );
+    res.json({ deleted: result.rowCount });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, getById, replay, getReplayHistory, deleteAll };

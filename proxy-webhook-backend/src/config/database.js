@@ -5,9 +5,14 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 20,
+  max: parseInt(process.env.DB_POOL_MAX || '20', 10),
+  min: parseInt(process.env.DB_POOL_MIN || '2',  10),
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
+  // Kill queries that take > 10s to prevent pile-up
+  statement_timeout: 10000,
+  // Kill idle transactions after 30s
+  idle_in_transaction_session_timeout: 30000,
 });
 
 pool.on('error', (err) => {

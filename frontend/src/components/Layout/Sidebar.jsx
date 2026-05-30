@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   IconLayoutDashboard, IconGitBranch, IconListDetails, IconPlayerPlay,
   IconBellRinging, IconHistory, IconUsers, IconKey, IconCreditCard,
@@ -24,32 +24,43 @@ const WORKSPACE = [
   { to: '/settings', label: 'Settings', icon: IconSettings },
 ];
 
-function SidebarLink({ to, label, Icon }) {
+function SidebarLink({ to, label, Icon, onClick }) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) => `sidebar-item${isActive ? ' active' : ''}`}
+      onClick={onClick}
     >
-      <Icon size={16} stroke={1.5} />
+      <Icon size={15} stroke={1.5} />
       {label}
     </NavLink>
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onNav }) {
   return (
     <nav className="sidebar">
       {NAV.map(({ to, label, icon: Icon }) => (
-        <SidebarLink key={to} to={to} label={label} Icon={Icon} />
+        <SidebarLink key={to} to={to} label={label} Icon={Icon} onClick={onNav} />
       ))}
+
       <div className="sidebar-section">Alerts</div>
       {ALERTS.map(({ to, label, icon: Icon }) => (
-        <SidebarLink key={to} to={to} label={label} Icon={Icon} />
+        <SidebarLink key={to} to={to} label={label} Icon={Icon} onClick={onNav} />
       ))}
+
       <div className="sidebar-section">Workspace</div>
       {WORKSPACE.map(({ to, label, icon: Icon }) => (
-        <SidebarLink key={to} to={to} label={label} Icon={Icon} />
+        <SidebarLink key={to} to={to} label={label} Icon={Icon} onClick={onNav} />
       ))}
+
+      <div className="sidebar-footer">
+        <div style={{ marginBottom: 2 }}>HookWatch</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a href="/privacy" style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: 'var(--color-border-secondary)' }}>Privacy</a>
+          <a href="/terms"   style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: 'var(--color-border-secondary)' }}>Terms</a>
+        </div>
+      </div>
     </nav>
   );
 }

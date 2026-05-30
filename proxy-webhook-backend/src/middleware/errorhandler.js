@@ -25,6 +25,7 @@ function globalErrorHandler(err, req, res, next) {
     error: isProduction && statusCode === 500
       ? 'An internal server error occurred.'
       : err.message,
+    code: err.code || (statusCode === 500 ? 'INTERNAL_ERROR' : 'ERROR'),
     ...(isProduction ? {} : { stack: err.stack }),
   });
 }

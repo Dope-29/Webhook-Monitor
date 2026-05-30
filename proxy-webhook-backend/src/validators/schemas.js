@@ -33,6 +33,7 @@ const updatePipelineSchema = Joi.object({
   timeout: Joi.number().integer().min(1000).max(60000).optional(),
   provider: Joi.string().max(100).optional().allow('', null),
   retention_days: Joi.number().integer().min(1).max(365).optional(),
+  paused: Joi.boolean().optional(),
 }).min(1); // at least one field required
 
 // ─── Settings ────────────────────────────────────────────────────────────────

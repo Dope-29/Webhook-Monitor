@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { IconBrandGithub, IconCheck, IconLoader2 } from '@tabler/icons-react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { IconBrandGithub, IconBrandGoogle, IconCheck, IconLoader2 } from '@tabler/icons-react';
 import client from '../api/client';
 import useAuthStore from '../store/authStore';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 const WHY = [
   { title: 'Zero-config setup', desc: 'Paste your proxy URL, done in 2 minutes' },
@@ -12,12 +14,17 @@ const WHY = [
 
 export default function AuthPage({ mode = 'signup' }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setAuth } = useAuthStore();
   const isSignup = mode === 'signup';
 
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(
+    searchParams.get('error') === 'oauth_failed'
+      ? 'OAuth sign-in failed. Please try again or use email/password.'
+      : ''
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +36,7 @@ export default function AuthPage({ mode = 'signup' }) {
         ? { name: form.name, email: form.email, password: form.password }
         : { email: form.email, password: form.password };
       const { data } = await client.post(endpoint, payload);
-      setAuth(data.token, data.customer_id);
+      setAuth(data.token, data.customer_id, isSignup ? form.name : null);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
@@ -101,12 +108,30 @@ export default function AuthPage({ mode = 'signup' }) {
             {loading ? <IconLoader2 size={14} className="spinner" /> : null}
             {isSignup ? 'Create account' : 'Sign in'}
           </button>
+          {!isSignup && (
+            <div style={{ textAlign: 'right', marginTop: -4, marginBottom: 4 }}>
+              <Link to="/forgot-password" style={{ fontSize: 11, color: '#185FA5' }}>Forgot password?</Link>
+            </div>
+          )}
         </form>
 
-        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--color-text-tertiary)' }}>or</div>
-        <button className="btn btn-full" style={{ marginTop: 8 }}>
+        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--color-text-tertiary)', margin: '4px 0' }}>or</div>
+
+        <a
+          href={`${BACKEND_URL}/api/auth/github`}
+          className="btn btn-full"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none', marginBottom: 6 }}
+        >
           <IconBrandGithub size={14} stroke={1.5} /> Continue with GitHub
-        </button>
+        </a>
+
+        <a
+          href={`${BACKEND_URL}/api/auth/google`}
+          className="btn btn-full"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}
+        >
+          <IconBrandGoogle size={14} stroke={1.5} /> Continue with Google
+        </a>
 
         <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: '1rem', textAlign: 'center' }}>
           {isSignup ? (
